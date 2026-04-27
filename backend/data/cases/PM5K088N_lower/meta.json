@@ -1,0 +1,7 @@
+{
+  "id": "PM5K088N_lower",
+  "name": "Скученность нижней челюсти (демо)",
+  "jaw": "lower",
+  "toothCount": 13,
+  "source": "Teeth3DS / 3DTeethSeg22 (CC BY-NC-SA 4.0)"
+}
