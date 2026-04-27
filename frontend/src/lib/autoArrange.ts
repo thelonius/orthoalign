@@ -72,21 +72,31 @@ export function computeAutoArrangeTargets(
     };
   }
 
-  // Клампим максимальное смещение, чтобы зубы не «улетали» далеко от
-  // десны. В нормализованных координатах меш занимает ~50 единиц; реальное
-  // ортодонтическое движение редко превышает 3-4 мм за весь курс лечения,
-  // что соответствует ~5% от размера меша = 2.5 единицы.
   const MAX_SHIFT = 2.5;
-  // Силовой коэффициент: 0.5 значит «движемся на половину от вычисленной
-  // целевой позиции». Так демо смотрится правдоподобнее, без декольте десны.
   const STRENGTH = 0.5;
+  // Поворот зуба вокруг вертикальной оси (Z) для выравнивания «лица»
+  // зуба перпендикулярно касательной к арке. Клинически — это коррекция
+  // ротации, которая в Скученности встречается у каждого второго зуба.
+  // 3° — субтильная коррекция. Наша модель сравнивает текущую
+  // и идеальную касательные арки, что в скученности упирается в потолок
+  // у всех зубов одновременно. Реальная клиническая ротация требует
+  // знания текущей ориентации каждого зуба, а у нас только центры —
+  // полностью корректную ротацию делать тут нечестно. Маленький cap
+  // даёт визуальный эффект «подравнивания», не претендуя на точность.
+  const MAX_ROTATION_DEG = 3;
+  const ROTATION_STRENGTH = 0.3;
+
+  // Идеальные позиции на арке для всех зубов (для расчёта касательной).
+  const idealPositions = present.map((_, i) => {
+    const s = (totalLen * i) / (present.length - 1);
+    return pointAtArcLen(s);
+  });
 
   const targets: Record<number, ToothTransform> = {};
   for (let i = 0; i < present.length; i++) {
     const label = present[i];
     const cur = points[i];
-    const arcS = (totalLen * i) / (present.length - 1);
-    const ideal = pointAtArcLen(arcS);
+    const ideal = idealPositions[i];
 
     let offset: V3 = [
       (ideal.x - cur[0]) * STRENGTH,
@@ -94,16 +104,47 @@ export function computeAutoArrangeTargets(
       0,
     ];
     const mag = Math.hypot(offset[0], offset[1]);
-    if (mag < 0.3) continue;
+    const skipMove = mag < 0.3;
     if (mag > MAX_SHIFT) {
       const scale = MAX_SHIFT / mag;
       offset = [offset[0] * scale, offset[1] * scale, 0];
     }
 
-    targets[label] = {
-      position: offset,
-      quaternion: [0, 0, 0, 1],
-    };
+    // Касательная к арке: вектор от предыдущего к следующему зубу.
+    // Для крайних зубов берём одностороннюю касательную.
+    const prevIdeal = idealPositions[Math.max(0, i - 1)];
+    const nextIdeal = idealPositions[Math.min(present.length - 1, i + 1)];
+    const idealTan = [nextIdeal.x - prevIdeal.x, nextIdeal.y - prevIdeal.y];
+
+    const prevCur = points[Math.max(0, i - 1)];
+    const nextCur = points[Math.min(present.length - 1, i + 1)];
+    const curTan = [nextCur[0] - prevCur[0], nextCur[1] - prevCur[1]];
+
+    const idealAng = Math.atan2(idealTan[1], idealTan[0]);
+    const curAng = Math.atan2(curTan[1], curTan[0]);
+    let deltaRad = idealAng - curAng;
+    // Нормализуем в [-π, π]
+    while (deltaRad > Math.PI) deltaRad -= 2 * Math.PI;
+    while (deltaRad < -Math.PI) deltaRad += 2 * Math.PI;
+    deltaRad *= ROTATION_STRENGTH;
+
+    const maxRad = (MAX_ROTATION_DEG * Math.PI) / 180;
+    if (Math.abs(deltaRad) > maxRad) {
+      deltaRad = Math.sign(deltaRad) * maxRad;
+    }
+
+    const skipRotation = Math.abs(deltaRad) < 0.02;
+    if (skipMove && skipRotation) continue;
+
+    // Кватернион вокруг оси Z: (0, 0, sin(θ/2), cos(θ/2))
+    const quat: [number, number, number, number] = [
+      0,
+      0,
+      Math.sin(deltaRad / 2),
+      Math.cos(deltaRad / 2),
+    ];
+
+    targets[label] = { position: offset, quaternion: quat };
   }
 
   return targets;

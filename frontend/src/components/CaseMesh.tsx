@@ -87,7 +87,10 @@ function Tooth({ data, isSelected }: ToothProps) {
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (label !== 0) selectTooth(label);
+    // Клик по десне снимает текущее выделение, иначе единственный способ
+    // снять — кликнуть полностью мимо меша.
+    if (label === 0) selectTooth(null);
+    else selectTooth(label);
   };
 
   // When selected from anywhere (click or programmatic), publish our group

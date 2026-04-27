@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { usePlan } from "../lib/store";
 
 interface Props {
   stage: number;
@@ -13,6 +14,7 @@ export function StageSlider({ stage, max, onChange }: Props) {
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const startStageRef = useRef<number>(0);
+  const selectTooth = usePlan((s) => s.selectTooth);
 
   useEffect(() => {
     if (!playing) {
@@ -51,7 +53,11 @@ export function StageSlider({ stage, max, onChange }: Props) {
     <div className="stage-slider">
       <button
         className="stage-slider__play"
-        onClick={() => setPlaying((p) => !p)}
+        onClick={() => {
+          if (!playing) selectTooth(null); // Снимаем синюю подсветку, чтобы
+          // во время анимации все зубы были равноправны.
+          setPlaying((p) => !p);
+        }}
         title={playing ? "Пауза" : "Воспроизвести анимацию лечения"}
       >
         {playing ? "❚❚" : "▶"}
