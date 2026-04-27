@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Env
+.env
+.env.local
+
+# Data — большие файлы кейсов, держим только meta.json в git
+backend/data/cases/*/data.json
+backend/data/cases/*/raw/
+
+# ML weights
+ml/checkpoints/
+ml/data/
+*.pt
+*.pth
+*.onnx
+
+# Local
+docker-compose.override.yml
+
+# Внешние клонированные репозитории — храним только наш код
+3DTeethSeg22_challenge/
+3D-Teeth-Scan-Semantic-Segmentation-with-MeshSegNet/
+
+# Local venv
+.venv/
+
+# Launch config (host-specific)
+.claude/

@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: orthoalign
+      MYSQL_DATABASE: orthoalign
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-porthoalign"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+
+  backend:
+    build: ./backend
+    ports:
+      - "8001:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    environment:
+      DATABASE_URL: mysql+pymysql://root:orthoalign@mysql:3306/orthoalign
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:5173
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: ./backend
+    depends_on:
+      - redis
+    volumes:
+      - ./backend:/app
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    command: celery -A app.worker worker --loglevel=info
+
+volumes:
+  mysql_data:
