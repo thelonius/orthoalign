@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "sync-cases": "node scripts/sync-cases.mjs",
+    "build": "npm run sync-cases && tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

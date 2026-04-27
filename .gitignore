@@ -49,3 +49,9 @@ docker-compose.override.yml
 
 # Launch config (host-specific)
 .claude/
+
+# Generated case copies (synced from backend/data/cases by sync-cases.mjs)
+frontend/public/cases/
+
+# Vite build output
+frontend/dist/
