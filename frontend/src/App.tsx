@@ -14,6 +14,8 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [showAbout, setShowAbout] = useState(true);
   const [showCritic, setShowCritic] = useState(false);
+  // Bump'ится при «применить план» — сигнал StageSlider'у автозапустить play.
+  const [autoplayTrigger, setAutoplayTrigger] = useState(0);
 
   const setCaseInStore = usePlan((s) => s.setCase);
   const stage = usePlan((s) => s.stage);
@@ -39,6 +41,15 @@ export function App() {
     } catch (e) {
       setError(String(e));
     }
+  };
+
+  const applyAutoArrange = () => {
+    if (!activeCase) return;
+    const t = computeAutoArrangeTargets(activeCase);
+    setAllTargets(t);
+    setStage(0);
+    // Триггерим автопроигрывание со стадии 0 → max.
+    setAutoplayTrigger((n) => n + 1);
   };
 
   const editing = stage === maxStage;
@@ -98,11 +109,7 @@ export function App() {
         {activeCase && (
           <button
             className="app__autorange"
-            onClick={() => {
-              const t = computeAutoArrangeTargets(activeCase);
-              setAllTargets(t);
-              setStage(maxStage);
-            }}
+            onClick={applyAutoArrange}
             title="Эвристическая расстановка зубов вдоль идеальной арки"
           >
             ⚡ Авто-арка
@@ -149,8 +156,32 @@ export function App() {
         {activeCase ? (
           <>
             <Viewer caseData={activeCase} />
+            {targetCount === 0 && (
+              <div className="empty-plan">
+                <div className="empty-plan__panel">
+                  <div className="empty-plan__title">Создайте план лечения</div>
+                  <div className="empty-plan__hint">
+                    Сначала расставьте целевые позиции зубов — потом слайдер
+                    покажет движение по стадиям.
+                  </div>
+                  <div className="empty-plan__actions">
+                    <button onClick={applyAutoArrange}>⚡ Авто-арка</button>
+                    <button onClick={() => setShowCritic(true)}>🤖 LLM-критик</button>
+                  </div>
+                  <div className="empty-plan__or">
+                    или клик по зубу для ручной расстановки
+                  </div>
+                </div>
+              </div>
+            )}
             <MetricsBar caseData={activeCase} />
-            <StageSlider stage={stage} max={maxStage} onChange={setStage} />
+            <StageSlider
+              stage={stage}
+              max={maxStage}
+              onChange={setStage}
+              hasPlan={targetCount > 0}
+              autoplayTrigger={autoplayTrigger}
+            />
           </>
         ) : (
           <div className="placeholder">Выберите кейс слева</div>
@@ -158,7 +189,14 @@ export function App() {
       </main>
 
       {activeCase && showCritic && (
-        <CriticPanel caseId={activeCase.id} onClose={() => setShowCritic(false)} />
+        <CriticPanel
+          caseId={activeCase.id}
+          onClose={() => setShowCritic(false)}
+          onPlanApplied={() => {
+            setShowCritic(false);
+            setAutoplayTrigger((n) => n + 1);
+          }}
+        />
       )}
     </div>
   );

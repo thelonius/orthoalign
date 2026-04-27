@@ -5,16 +5,28 @@ interface Props {
   stage: number;
   max: number;
   onChange: (s: number) => void;
+  hasPlan: boolean;
+  // При изменении значения слайдер автозапустит play (счётчик bump'ится в App).
+  autoplayTrigger: number;
 }
 
 const PLAY_DURATION_MS = 4000;
 
-export function StageSlider({ stage, max, onChange }: Props) {
+export function StageSlider({ stage, max, onChange, hasPlan, autoplayTrigger }: Props) {
   const [playing, setPlaying] = useState(false);
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const startStageRef = useRef<number>(0);
   const selectTooth = usePlan((s) => s.selectTooth);
+
+  // Автозапуск play при изменении autoplayTrigger (после применения плана).
+  useEffect(() => {
+    if (autoplayTrigger > 0 && hasPlan) {
+      selectTooth(null);
+      setPlaying(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoplayTrigger]);
 
   useEffect(() => {
     if (!playing) {
@@ -50,20 +62,31 @@ export function StageSlider({ stage, max, onChange }: Props) {
   }, [playing]);
 
   return (
-    <div className="stage-slider">
+    <div className={"stage-slider" + (!hasPlan ? " stage-slider--disabled" : "")}>
       <button
         className="stage-slider__play"
+        disabled={!hasPlan}
         onClick={() => {
-          if (!playing) selectTooth(null); // Снимаем синюю подсветку, чтобы
-          // во время анимации все зубы были равноправны.
+          if (!hasPlan) return;
+          if (!playing) selectTooth(null);
           setPlaying((p) => !p);
         }}
-        title={playing ? "Пауза" : "Воспроизвести анимацию лечения"}
+        title={
+          !hasPlan
+            ? "Создайте план чтобы воспроизвести"
+            : playing
+              ? "Пауза"
+              : "Воспроизвести анимацию лечения"
+        }
       >
         {playing ? "❚❚" : "▶"}
       </button>
       <label>
-        Стадия: <strong>{Math.round(stage)} / {max}</strong>
+        {hasPlan ? (
+          <>Стадия: <strong>{Math.round(stage)} / {max}</strong></>
+        ) : (
+          <span className="stage-slider__hint">План ещё не создан</span>
+        )}
       </label>
       <input
         type="range"
@@ -71,6 +94,7 @@ export function StageSlider({ stage, max, onChange }: Props) {
         max={max}
         step={0.1}
         value={stage}
+        disabled={!hasPlan}
         onChange={(e) => {
           if (playing) setPlaying(false);
           onChange(Number(e.target.value));

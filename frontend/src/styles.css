@@ -442,6 +442,80 @@ body, html, #root {
   flex-shrink: 0;
 }
 .stage-slider__play:hover { background: #3a5e90; }
+.stage-slider__play:disabled {
+  background: #2a2a32;
+  border-color: #3a3a42;
+  color: #6a6a72;
+  cursor: not-allowed;
+}
+.stage-slider--disabled input[type="range"] {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.stage-slider__hint {
+  color: #8a8a92;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.empty-plan {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+.empty-plan__panel {
+  background: rgba(20, 20, 26, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #2a2a32;
+  border-radius: 10px;
+  padding: 24px 28px;
+  text-align: center;
+  pointer-events: auto;
+  max-width: 360px;
+}
+.empty-plan__title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.empty-plan__hint {
+  font-size: 13px;
+  color: #9aa0a6;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.empty-plan__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.empty-plan__actions button {
+  background: #2c4a78;
+  border: 1px solid #4a6a98;
+  color: #e8e8ea;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.empty-plan__actions button:hover { background: #3a5e90; }
+.empty-plan__actions button:nth-child(2) {
+  background: #2a2a32;
+  border-color: #3a3a42;
+}
+.empty-plan__actions button:nth-child(2):hover { background: #3a3a42; }
+.empty-plan__or {
+  font-size: 11px;
+  color: #6a6a72;
+  font-style: italic;
+}
+
+.app__main { position: relative; }
 
 .stage-slider label {
   font-size: 13px;

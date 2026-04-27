@@ -6,13 +6,13 @@ import { usePlan, ToothTransform } from "../lib/store";
 interface Props {
   caseId: string;
   onClose: () => void;
+  onPlanApplied?: () => void;
 }
 
-export function CriticPanel({ caseId, onClose }: Props) {
+export function CriticPanel({ caseId, onClose, onPlanApplied }: Props) {
   const targets = usePlan((s) => s.targets);
   const setAllTargets = usePlan((s) => s.setAllTargets);
   const setStage = usePlan((s) => s.setStage);
-  const maxStage = usePlan((s) => s.maxStage);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,8 @@ export function CriticPanel({ caseId, onClose }: Props) {
       };
     }
     setAllTargets(merged);
-    setStage(maxStage);
+    setStage(0);
+    onPlanApplied?.();
   };
 
   return (
