@@ -273,6 +273,23 @@ body, html, #root {
   gap: 16px;
 }
 
+.stage-slider__play {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2c4a78;
+  border: 1px solid #4a6a98;
+  color: #e8e8ea;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+.stage-slider__play:hover { background: #3a5e90; }
+
 .stage-slider label {
   font-size: 13px;
   white-space: nowrap;
