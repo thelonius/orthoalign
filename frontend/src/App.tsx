@@ -4,7 +4,6 @@ import { StageSlider } from "./components/StageSlider";
 import { fetchCases, fetchCase } from "./lib/api";
 import type { CaseData, CaseMeta } from "./lib/types";
 import { usePlan } from "./lib/store";
-import { computeAutoArrangeTargets } from "./lib/autoArrange";
 import { CriticPanel } from "./components/CriticPanel";
 import { MetricsBar } from "./components/MetricsBar";
 
@@ -24,7 +23,6 @@ export function App() {
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const targets = usePlan((s) => s.targets);
   const resetTargets = usePlan((s) => s.resetTargets);
-  const setAllTargets = usePlan((s) => s.setAllTargets);
 
   useEffect(() => {
     fetchCases()
@@ -43,15 +41,6 @@ export function App() {
     }
   };
 
-  const applyAutoArrange = () => {
-    if (!activeCase) return;
-    const t = computeAutoArrangeTargets(activeCase);
-    setAllTargets(t);
-    setStage(0);
-    // Триггерим автопроигрывание со стадии 0 → max.
-    setAutoplayTrigger((n) => n + 1);
-  };
-
   const editing = stage === maxStage;
   const targetCount = Object.keys(targets).length;
 
@@ -68,10 +57,20 @@ export function App() {
             </p>
             <h3>Что показывает</h3>
             <ol>
-              <li>Загруженный 3D-скан челюсти автоматически разделён на отдельные зубы (FDI-нумерация).</li>
-              <li>Слайдер «Стадия лечения» прогоняет интерполяцию между исходным и целевым положением каждого зуба.</li>
-              <li>На максимальной стадии можно выбрать зуб и подвинуть его гизмо — это и есть работа техника по планированию, которую обычно делают руками 30-60 минут на кейс.</li>
+              <li>3D-скан челюсти автоматически сегментирован на зубы по FDI.</li>
+              <li>AI-планировщик (Llama 3.3 70B через Groq) предлагает целевые движения зубов с клиническим обоснованием, либо вы расставляете вручную через клик и гизмо.</li>
+              <li>Слайдер «Стадия» прогоняет интерполяцию от исходного состояния к плановому, ▶ запускает анимацию.</li>
+              <li>Метрики «было → стало» (dispersion, spacing variance, midline) показывают численный эффект плана.</li>
+              <li>Зубы перекрывающие соседей подсвечиваются красным — план физически невозможен в этой точке.</li>
             </ol>
+
+            <h3>Что это НЕ есть</h3>
+            <p className="about__note" style={{borderTop: 'none', paddingTop: 0, marginTop: 0}}>
+              Не клинический инструмент. Не учитывает overbite/overjet, Bolton ratio,
+              торк, реальные размеры зубов, окклюзию двух челюстей, биомеханику движения.
+              Это технико-демонстрационный прототип, показывающий навык построения
+              такого софта, а не готовое решение.
+            </p>
             <h3>Стек</h3>
             <p>
               Python · FastAPI · Celery · Redis · MySQL · React · TypeScript ·
@@ -95,33 +94,24 @@ export function App() {
         <button className="app__about" onClick={() => setShowAbout(true)} title="О проекте">
           ?
         </button>
-        {activeCase && (
+        {activeCase && targetCount > 0 && (
           <span className="app__hint">
             {editing
               ? selectedLabel
                 ? `Зуб ${selectedLabel}: тащите гизмо для целевой позиции`
                 : "Кликните зуб, чтобы расставить целевую позицию"
               : stage === 0
-                ? "Прокрутите слайдер до конца, чтобы редактировать."
-                : `Стадия ${stage} из ${maxStage}`}
+                ? "Стадия 0 — исходное состояние. Прокрутите до конца для редактирования."
+                : `Стадия ${Math.round(stage)} из ${maxStage}`}
           </span>
-        )}
-        {activeCase && (
-          <button
-            className="app__autorange"
-            onClick={applyAutoArrange}
-            title="Эвристическая расстановка зубов вдоль идеальной арки"
-          >
-            ⚡ Авто-арка
-          </button>
         )}
         {activeCase && (
           <button
             className="app__critic"
             onClick={() => setShowCritic((s) => !s)}
-            title="Открыть LLM-критик"
+            title="Открыть AI-планировщик"
           >
-            🤖 LLM
+            🤖 AI план
           </button>
         )}
         {targetCount > 0 && (
@@ -159,17 +149,18 @@ export function App() {
             {targetCount === 0 && (
               <div className="empty-plan">
                 <div className="empty-plan__panel">
-                  <div className="empty-plan__title">Создайте план лечения</div>
+                  <div className="empty-plan__title">
+                    Это исходное состояние — то, с чем пациент пришёл к врачу
+                  </div>
                   <div className="empty-plan__hint">
-                    Сначала расставьте целевые позиции зубов — потом слайдер
-                    покажет движение по стадиям.
+                    Создайте план: целевые позиции зубов после лечения.
+                    После этого слайдер покажет анимацию по стадиям.
                   </div>
                   <div className="empty-plan__actions">
-                    <button onClick={applyAutoArrange}>⚡ Авто-арка</button>
-                    <button onClick={() => setShowCritic(true)}>🤖 LLM-критик</button>
+                    <button onClick={() => setShowCritic(true)}>🤖 AI план через Llama</button>
                   </div>
                   <div className="empty-plan__or">
-                    или клик по зубу для ручной расстановки
+                    или клик по любому зубу — расставляйте вручную
                   </div>
                 </div>
               </div>

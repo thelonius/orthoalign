@@ -3,13 +3,15 @@ import * as THREE from "three";
 import { ThreeEvent } from "@react-three/fiber";
 import type { CaseData } from "../lib/types";
 import { usePlan, getDisplayTransform } from "../lib/store";
+import { findCollisions } from "../lib/collisions";
 
 interface Props {
   caseData: CaseData;
 }
 
-function colorForLabel(label: number, selected: boolean): THREE.Color {
+function colorForLabel(label: number, selected: boolean, colliding: boolean): THREE.Color {
   if (label === 0) return new THREE.Color(0x8a7f72);
+  if (colliding) return new THREE.Color(0xd0524a); // приглушённый красный
   if (selected) return new THREE.Color(0x4a90e2);
   const hue = ((label * 47) % 360) / 360;
   return new THREE.Color().setHSL(hue, 0.55, 0.6);
@@ -73,9 +75,10 @@ function buildToothMeshes(caseData: CaseData): ToothMeshData[] {
 interface ToothProps {
   data: ToothMeshData;
   isSelected: boolean;
+  isColliding: boolean;
 }
 
-function Tooth({ data, isSelected }: ToothProps) {
+function Tooth({ data, isSelected, isColliding }: ToothProps) {
   const { label, geometry, center } = data;
   const stage = usePlan((s) => s.stage);
   const maxStage = usePlan((s) => s.maxStage);
@@ -125,7 +128,7 @@ function Tooth({ data, isSelected }: ToothProps) {
         onClick={handleClick}
       >
         <meshStandardMaterial
-          color={colorForLabel(label, isSelected)}
+          color={colorForLabel(label, isSelected, isColliding)}
           roughness={0.6}
           metalness={0.05}
         />
@@ -138,6 +141,14 @@ export function CaseMesh({ caseData }: Props) {
   const teeth = useMemo(() => buildToothMeshes(caseData), [caseData]);
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const selectTooth = usePlan((s) => s.selectTooth);
+  const targets = usePlan((s) => s.targets);
+  const stage = usePlan((s) => s.stage);
+  const maxStage = usePlan((s) => s.maxStage);
+
+  const colliding = useMemo(() => {
+    const t = maxStage > 0 ? stage / maxStage : 0;
+    return findCollisions(caseData, targets, t);
+  }, [caseData, targets, stage, maxStage]);
 
   return (
     <group onPointerMissed={() => selectTooth(null)}>
@@ -146,6 +157,7 @@ export function CaseMesh({ caseData }: Props) {
           key={data.label}
           data={data}
           isSelected={data.label === selectedLabel}
+          isColliding={colliding.has(data.label)}
         />
       ))}
     </group>
