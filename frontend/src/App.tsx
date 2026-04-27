@@ -6,6 +6,7 @@ import type { CaseData, CaseMeta } from "./lib/types";
 import { usePlan } from "./lib/store";
 import { computeAutoArrangeTargets } from "./lib/autoArrange";
 import { CriticPanel } from "./components/CriticPanel";
+import { MetricsBar } from "./components/MetricsBar";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
@@ -148,6 +149,7 @@ export function App() {
         {activeCase ? (
           <>
             <Viewer caseData={activeCase} />
+            <MetricsBar caseData={activeCase} />
             <StageSlider stage={stage} max={maxStage} onChange={setStage} />
           </>
         ) : (
