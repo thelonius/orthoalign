@@ -69,6 +69,21 @@ body, html, #root {
 }
 .app__reset:hover { background: #2a1a1a; }
 
+.app__autorange {
+  margin-left: auto;
+  background: linear-gradient(135deg, #2c4a78, #3a5e90);
+  border: 1px solid #4a6a98;
+  color: #e8e8ea;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.app__autorange:hover { background: linear-gradient(135deg, #3a5e90, #4a72a8); }
+/* Когда есть и autorange, и reset — autorange теряет margin-left:auto */
+.app__autorange + .app__reset { margin-left: 8px; }
+
 .app__about {
   width: 24px;
   height: 24px;

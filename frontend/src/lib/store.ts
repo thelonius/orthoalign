@@ -25,6 +25,7 @@ interface PlanState {
   selectTooth: (label: number | null) => void;
   setSelectedObj: (obj: Group | null) => void;
   setTargetTransform: (label: number, transform: ToothTransform) => void;
+  setAllTargets: (targets: Record<number, ToothTransform>) => void;
   resetTargets: () => void;
 }
 
@@ -48,6 +49,7 @@ export const usePlan = create<PlanState>()((set, get) => {
   setSelectedObj: (obj) => set({ selectedObj: obj }),
   setTargetTransform: (label, transform) =>
     set((s) => ({ targets: { ...s.targets, [label]: transform } })),
+  setAllTargets: (targets) => set({ targets }),
   resetTargets: () => set({ targets: {}, selectedLabel: null, selectedObj: null }),
 };
 });

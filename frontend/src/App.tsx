@@ -4,6 +4,7 @@ import { StageSlider } from "./components/StageSlider";
 import { fetchCases, fetchCase } from "./lib/api";
 import type { CaseData, CaseMeta } from "./lib/types";
 import { usePlan } from "./lib/store";
+import { computeAutoArrangeTargets } from "./lib/autoArrange";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
@@ -18,6 +19,7 @@ export function App() {
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const targets = usePlan((s) => s.targets);
   const resetTargets = usePlan((s) => s.resetTargets);
+  const setAllTargets = usePlan((s) => s.setAllTargets);
 
   useEffect(() => {
     fetchCases()
@@ -89,6 +91,19 @@ export function App() {
                 ? "Прокрутите слайдер до конца, чтобы редактировать."
                 : `Стадия ${stage} из ${maxStage}`}
           </span>
+        )}
+        {activeCase && (
+          <button
+            className="app__autorange"
+            onClick={() => {
+              const t = computeAutoArrangeTargets(activeCase);
+              setAllTargets(t);
+              setStage(maxStage);
+            }}
+            title="Эвристическая расстановка зубов вдоль идеальной арки"
+          >
+            ⚡ Авто-арка
+          </button>
         )}
         {targetCount > 0 && (
           <button className="app__reset" onClick={resetTargets} title="Сбросить все цели">
