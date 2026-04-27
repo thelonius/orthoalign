@@ -72,6 +72,15 @@ export function computeAutoArrangeTargets(
     };
   }
 
+  // Клампим максимальное смещение, чтобы зубы не «улетали» далеко от
+  // десны. В нормализованных координатах меш занимает ~50 единиц; реальное
+  // ортодонтическое движение редко превышает 3-4 мм за весь курс лечения,
+  // что соответствует ~5% от размера меша = 2.5 единицы.
+  const MAX_SHIFT = 2.5;
+  // Силовой коэффициент: 0.5 значит «движемся на половину от вычисленной
+  // целевой позиции». Так демо смотрится правдоподобнее, без декольте десны.
+  const STRENGTH = 0.5;
+
   const targets: Record<number, ToothTransform> = {};
   for (let i = 0; i < present.length; i++) {
     const label = present[i];
@@ -79,9 +88,17 @@ export function computeAutoArrangeTargets(
     const arcS = (totalLen * i) / (present.length - 1);
     const ideal = pointAtArcLen(arcS);
 
-    const offset: V3 = [ideal.x - cur[0], ideal.y - cur[1], 0];
-    // Скипаем зуб если шевеление меньше 0.3 — нет смысла.
-    if (Math.hypot(offset[0], offset[1]) < 0.3) continue;
+    let offset: V3 = [
+      (ideal.x - cur[0]) * STRENGTH,
+      (ideal.y - cur[1]) * STRENGTH,
+      0,
+    ];
+    const mag = Math.hypot(offset[0], offset[1]);
+    if (mag < 0.3) continue;
+    if (mag > MAX_SHIFT) {
+      const scale = MAX_SHIFT / mag;
+      offset = [offset[0] * scale, offset[1] * scale, 0];
+    }
 
     targets[label] = {
       position: offset,

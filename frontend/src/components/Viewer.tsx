@@ -54,7 +54,10 @@ export function Viewer({ caseData }: Props) {
       <directionalLight position={[-80, -80, 80]} intensity={0.4} />
       <directionalLight position={[0, 0, -80]} intensity={0.25} />
       <OrbitControls makeDefault enableDamping target={[0, 0, 0]} />
-      <Bounds key={caseData.id} fit clip observe margin={1.4}>
+      {/* Bounds.observe=false: фитим камеру один раз на загрузке кейса и
+          не пересчитываем при движении зубов, иначе камера дёргается на
+          каждом стейдже. */}
+      <Bounds key={caseData.id} fit clip margin={1.4}>
         <CaseMesh caseData={caseData} />
       </Bounds>
       {selectedObj && editing && (
