@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import cases
+from app.api import cases, suggest
 
 app = FastAPI(title="OrthoAlign API", version="0.1.0")
 
@@ -22,3 +22,4 @@ def health():
 
 
 app.include_router(cases.router, prefix="/api/cases", tags=["cases"])
+app.include_router(suggest.router, prefix="/api/suggest", tags=["suggest"])

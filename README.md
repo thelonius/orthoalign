@@ -82,6 +82,20 @@ python3 -m venv .venv
 
 Подробнее — `docs/data-prep.md`.
 
+## LLM-критик (v2)
+
+Эндпоинт `POST /api/suggest` принимает текущий план и возвращает клинический разбор + список адресных правок per-tooth. Работает через любой OpenAI-совместимый провайдер (Groq, Ollama, Together, Fireworks).
+
+Минимальная настройка через Groq (бесплатный tier, Llama 3.3 70B, ~1 секунда отклик):
+
+```bash
+cp .env.example .env
+# Раскомментируй Groq-секцию, вставь ключ из https://console.groq.com/keys
+docker compose up -d
+```
+
+Кнопка **🤖 LLM** в шапке открывает боковую панель с разбором.
+
 ## Лицензия данных
 
 Демо-кейсы — открытый датасет [Teeth3DS](https://crns-smartvision.github.io/teeth3ds) (CC BY-NC-SA 4.0). Использование в портфолио с указанием источника — ОК. Для коммерческого использования — нет.

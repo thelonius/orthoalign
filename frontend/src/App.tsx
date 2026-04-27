@@ -5,12 +5,14 @@ import { fetchCases, fetchCase } from "./lib/api";
 import type { CaseData, CaseMeta } from "./lib/types";
 import { usePlan } from "./lib/store";
 import { computeAutoArrangeTargets } from "./lib/autoArrange";
+import { CriticPanel } from "./components/CriticPanel";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
   const [activeCase, setActiveCase] = useState<CaseData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showAbout, setShowAbout] = useState(true);
+  const [showCritic, setShowCritic] = useState(false);
 
   const setCaseInStore = usePlan((s) => s.setCase);
   const stage = usePlan((s) => s.stage);
@@ -105,6 +107,15 @@ export function App() {
             ⚡ Авто-арка
           </button>
         )}
+        {activeCase && (
+          <button
+            className="app__critic"
+            onClick={() => setShowCritic((s) => !s)}
+            title="Открыть LLM-критик"
+          >
+            🤖 LLM
+          </button>
+        )}
         {targetCount > 0 && (
           <button className="app__reset" onClick={resetTargets} title="Сбросить все цели">
             Сброс ({targetCount})
@@ -143,6 +154,10 @@ export function App() {
           <div className="placeholder">Выберите кейс слева</div>
         )}
       </main>
+
+      {activeCase && showCritic && (
+        <CriticPanel caseId={activeCase.id} onClose={() => setShowCritic(false)} />
+      )}
     </div>
   );
 }

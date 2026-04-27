@@ -19,3 +19,16 @@ export interface CaseData extends CaseMeta {
   labels: number[];
   toothInitialCenters: Record<string, [number, number, number]>;
 }
+
+export interface ToothAdjustment {
+  label: number;
+  delta_position: [number, number, number];
+  rationale: string;
+}
+
+export interface SuggestResponse {
+  commentary: string;
+  adjustments: ToothAdjustment[];
+  model: string;
+  raw_llm_text?: string | null;
+}
