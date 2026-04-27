@@ -69,6 +69,105 @@ body, html, #root {
 }
 .app__reset:hover { background: #2a1a1a; }
 
+.app__about {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2a2a32;
+  border: 1px solid #3a3a42;
+  color: #9aa0a6;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.app__about:hover { background: #3a3a42; color: #e8e8ea; }
+
+.about {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.about__panel {
+  background: #1a1a1f;
+  border: 1px solid #2a2a32;
+  border-radius: 12px;
+  max-width: 600px;
+  padding: 28px 32px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.about__panel h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.about__panel h3 {
+  margin: 18px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9aa0a6;
+}
+.about__panel p {
+  margin: 0 0 10px;
+  color: #c8c8ca;
+}
+.about__panel ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  color: #c8c8ca;
+}
+.about__panel ol li { margin-bottom: 6px; }
+.about__panel a {
+  color: #6fa8e6;
+  text-decoration: none;
+  border-bottom: 1px dotted #6fa8e6;
+}
+.about__note {
+  font-size: 12px;
+  color: #8a8a92;
+  border-top: 1px solid #2a2a32;
+  padding-top: 12px;
+  margin-top: 18px !important;
+}
+.about__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: #9aa0a6;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+.about__close:hover { color: #e8e8ea; }
+.about__start {
+  margin-top: 18px;
+  background: #2c4a78;
+  border: 1px solid #4a6a98;
+  color: #e8e8ea;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.about__start:hover { background: #3c5a88; }
+
 .app__sidebar {
   grid-area: sidebar;
   border-right: 1px solid #2a2a32;
