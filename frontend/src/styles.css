@@ -51,6 +51,24 @@ body, html, #root {
   color: #9aa0a6;
 }
 
+.app__hint {
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-left: 8px;
+}
+
+.app__reset {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #4a3a3a;
+  color: #e89a9a;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.app__reset:hover { background: #2a1a1a; }
+
 .app__sidebar {
   grid-area: sidebar;
   border-right: 1px solid #2a2a32;

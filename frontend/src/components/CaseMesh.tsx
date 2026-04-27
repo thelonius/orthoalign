@@ -1,29 +1,28 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { ThreeEvent } from "@react-three/fiber";
 import type { CaseData } from "../lib/types";
+import { usePlan, getDisplayTransform } from "../lib/store";
 
 interface Props {
   caseData: CaseData;
-  stage: number;
 }
 
-// Палитра для FDI-нумерации: десна = серый, зубы = HSL по индексу.
-function colorForLabel(label: number): THREE.Color {
+function colorForLabel(label: number, selected: boolean): THREE.Color {
   if (label === 0) return new THREE.Color(0x8a7f72);
+  if (selected) return new THREE.Color(0x4a90e2);
   const hue = ((label * 47) % 360) / 360;
   return new THREE.Color().setHSL(hue, 0.55, 0.6);
 }
 
-interface ToothMesh {
+interface ToothMeshData {
   label: number;
   geometry: THREE.BufferGeometry;
   center: THREE.Vector3;
 }
 
-function buildToothMeshes(caseData: CaseData): ToothMesh[] {
+function buildToothMeshes(caseData: CaseData): ToothMeshData[] {
   const { vertices, faces, labels } = caseData;
-
-  // Группируем треугольники по доминирующему лейблу его вершин.
   const trianglesByLabel = new Map<number, number[]>();
   for (let i = 0; i < faces.length; i += 3) {
     const a = faces[i];
@@ -32,16 +31,14 @@ function buildToothMeshes(caseData: CaseData): ToothMesh[] {
     const la = labels[a];
     const lb = labels[b];
     const lc = labels[c];
-    // Голосование: если все три вершины разные — отдаём гингиве.
     const label = la === lb || la === lc ? la : lb === lc ? lb : 0;
     if (!trianglesByLabel.has(label)) trianglesByLabel.set(label, []);
     trianglesByLabel.get(label)!.push(a, b, c);
   }
 
-  const result: ToothMesh[] = [];
+  const result: ToothMeshData[] = [];
   for (const [label, triIndices] of trianglesByLabel) {
     const geom = new THREE.BufferGeometry();
-    // Перепаковка: новые компактные индексы.
     const remap = new Map<number, number>();
     const positions: number[] = [];
     const newFaces: number[] = [];
@@ -64,47 +61,90 @@ function buildToothMeshes(caseData: CaseData): ToothMesh[] {
     );
     geom.setIndex(newFaces);
     geom.computeVertexNormals();
-
     geom.computeBoundingBox();
+    geom.computeBoundingSphere();
     const center = new THREE.Vector3();
     geom.boundingBox!.getCenter(center);
-
     result.push({ label, geometry: geom, center });
   }
   return result;
 }
 
-export function CaseMesh({ caseData, stage }: Props) {
-  const teeth = useMemo(() => buildToothMeshes(caseData), [caseData]);
+interface ToothProps {
+  data: ToothMeshData;
+  isSelected: boolean;
+}
 
-  // Простая интерполяция стадий: зубы расходятся вверх по Y пропорционально
-  // stage. В v1 это плейсхолдер для целевых позиций — заменим на реальную
-  // интерполяцию start→target когда добавим редактирование.
-  const t = stage / 20;
+function Tooth({ data, isSelected }: ToothProps) {
+  const { label, geometry, center } = data;
+  const stage = usePlan((s) => s.stage);
+  const maxStage = usePlan((s) => s.maxStage);
+  const target = usePlan((s) => s.targets[label]);
+  const selectTooth = usePlan((s) => s.selectTooth);
+  const setSelectedObj = usePlan((s) => s.setSelectedObj);
+  const display = getDisplayTransform(target, stage, maxStage);
+  const groupRef = useRef<THREE.Group | null>(null);
+
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (label !== 0) selectTooth(label);
+  };
+
+  // When selected from anywhere (click or programmatic), publish our group
+  // ref to the store so TransformControls in Viewer can attach to it.
+  useEffect(() => {
+    if (isSelected && groupRef.current) {
+      setSelectedObj(groupRef.current);
+    }
+  }, [isSelected, setSelectedObj]);
+
+  const setRef = (g: THREE.Group | null) => {
+    groupRef.current = g;
+    if (g) {
+      g.userData.pivot = [center.x, center.y, center.z];
+      g.userData.label = label;
+    }
+  };
 
   return (
-    <group>
-      {teeth.map(({ label, geometry }) => {
-        const isGum = label === 0;
-        const offset: [number, number, number] = isGum
-          ? [0, 0, 0]
-          : [0, t * 2 * Math.sin(label), 0];
-        return (
-          <mesh
-            key={label}
-            geometry={geometry}
-            position={offset}
-            castShadow
-            receiveShadow
-          >
-            <meshStandardMaterial
-              color={colorForLabel(label)}
-              roughness={0.6}
-              metalness={0.05}
-            />
-          </mesh>
-        );
-      })}
+    <group
+      ref={setRef}
+      position={[
+        center.x + display.position[0],
+        center.y + display.position[1],
+        center.z + display.position[2],
+      ]}
+      quaternion={display.quaternion}
+    >
+      <mesh
+        geometry={geometry}
+        position={[-center.x, -center.y, -center.z]}
+        onClick={handleClick}
+      >
+        <meshStandardMaterial
+          color={colorForLabel(label, isSelected)}
+          roughness={0.6}
+          metalness={0.05}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+export function CaseMesh({ caseData }: Props) {
+  const teeth = useMemo(() => buildToothMeshes(caseData), [caseData]);
+  const selectedLabel = usePlan((s) => s.selectedLabel);
+  const selectTooth = usePlan((s) => s.selectTooth);
+
+  return (
+    <group onPointerMissed={() => selectTooth(null)}>
+      {teeth.map((data) => (
+        <Tooth
+          key={data.label}
+          data={data}
+          isSelected={data.label === selectedLabel}
+        />
+      ))}
     </group>
   );
 }
