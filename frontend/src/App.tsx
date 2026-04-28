@@ -6,22 +6,19 @@ import type { CaseData, CaseMeta } from "./lib/types";
 import { usePlan } from "./lib/store";
 import { CriticPanel } from "./components/CriticPanel";
 import { MetricsBar } from "./components/MetricsBar";
+import { CaseThumbnail } from "./components/CaseThumbnail";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
   const [activeCase, setActiveCase] = useState<CaseData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // About показываем только если пользователь его раньше не закрывал.
-  const [showAbout, setShowAbout] = useState(
-    () => !localStorage.getItem("orthoalign.aboutDismissed"),
-  );
+  // About свернут по умолчанию — открывается по клику на ? в шапке.
+  const [showAbout, setShowAbout] = useState(false);
   const [showCritic, setShowCritic] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // Sidebar открыт по умолчанию на десктопе; на мобильном CSS скроет его.
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const dismissAbout = () => {
-    setShowAbout(false);
-    localStorage.setItem("orthoalign.aboutDismissed", "1");
-  };
+  const dismissAbout = () => setShowAbout(false);
   // Bump'ится при «применить план» — сигнал StageSlider'у автозапустить play.
   const [autoplayTrigger, setAutoplayTrigger] = useState(0);
 
@@ -35,8 +32,13 @@ export function App() {
 
   useEffect(() => {
     fetchCases()
-      .then(setCases)
+      .then((cs) => {
+        setCases(cs);
+        // Автовыбор первого кейса для немедленного wow-эффекта.
+        if (cs.length > 0) onSelectCase(cs[0].id);
+      })
       .catch((e) => setError(String(e)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onSelectCase = async (id: string) => {
@@ -100,8 +102,8 @@ export function App() {
       <header className="app__header">
         <button
           className="app__burger"
-          onClick={() => setDrawerOpen((s) => !s)}
-          aria-label="Меню кейсов"
+          onClick={() => setSidebarOpen((s) => !s)}
+          aria-label="Свернуть/раскрыть меню кейсов"
         >
           ☰
         </button>
@@ -137,10 +139,10 @@ export function App() {
         )}
       </header>
 
-      {drawerOpen && (
-        <div className="app__drawer-overlay" onClick={() => setDrawerOpen(false)} />
+      {sidebarOpen && (
+        <div className="app__drawer-overlay" onClick={() => setSidebarOpen(false)} />
       )}
-      <aside className={"app__sidebar" + (drawerOpen ? " app__sidebar--open" : "")}>
+      <aside className={"app__sidebar" + (sidebarOpen ? " app__sidebar--open" : " app__sidebar--collapsed")}>
         <h2>Демо-кейсы</h2>
         {error && <div className="error">{error}</div>}
         <ul className="case-list">
@@ -148,15 +150,15 @@ export function App() {
             <li key={c.id}>
               <button
                 className={activeCase?.id === c.id ? "active" : ""}
-                onClick={() => {
-                  onSelectCase(c.id);
-                  setDrawerOpen(false);
-                }}
+                onClick={() => onSelectCase(c.id)}
               >
-                {c.name}
-                <small>
-                  {c.jaw === "upper" ? "верхняя" : "нижняя"} · {c.toothCount} зубов
-                </small>
+                <CaseThumbnail meta={c} size={48} />
+                <div className="case-list__text">
+                  <div className="case-list__name">{c.name}</div>
+                  <small>
+                    {c.jaw === "upper" ? "верхняя" : "нижняя"} · {c.toothCount} зубов
+                  </small>
+                </div>
               </button>
             </li>
           ))}
@@ -198,10 +200,7 @@ export function App() {
           </>
         ) : (
           <div className="placeholder">
-            <p>Выберите кейс из меню</p>
-            <button className="placeholder__cta" onClick={() => setDrawerOpen(true)}>
-              Открыть демо-кейсы
-            </button>
+            <p>Загружаем демо-кейс…</p>
           </div>
         )}
       </main>

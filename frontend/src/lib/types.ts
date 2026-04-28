@@ -6,6 +6,7 @@ export interface CaseMeta {
   jaw: "upper" | "lower";
   toothCount: number;
   source: string;
+  toothCenters: Record<string, [number, number, number]>;
 }
 
 export interface Transform {

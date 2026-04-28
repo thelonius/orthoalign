@@ -125,6 +125,9 @@ def process_case(*, mesh_path: Path, labels_path: Path, case_id: str,
         "jaw": jaw,
         "toothCount": len(tooth_centers),
         "source": source,
+        # Центры зубов идут и в meta — фронт использует их для SVG-миниатюр
+        # без загрузки полного меша.
+        "toothCenters": tooth_centers,
     }
     with (case_dir / "meta.json").open("w") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
