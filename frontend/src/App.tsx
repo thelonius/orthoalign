@@ -16,6 +16,7 @@ export function App() {
     () => !localStorage.getItem("orthoalign.aboutDismissed"),
   );
   const [showCritic, setShowCritic] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const dismissAbout = () => {
     setShowAbout(false);
@@ -97,6 +98,13 @@ export function App() {
         </div>
       )}
       <header className="app__header">
+        <button
+          className="app__burger"
+          onClick={() => setDrawerOpen((s) => !s)}
+          aria-label="Меню кейсов"
+        >
+          ☰
+        </button>
         <h1>OrthoAlign</h1>
         <span className="app__tag">v0.1 · demo</span>
         <button className="app__about" onClick={() => setShowAbout(true)} title="О проекте">
@@ -129,7 +137,10 @@ export function App() {
         )}
       </header>
 
-      <aside className="app__sidebar">
+      {drawerOpen && (
+        <div className="app__drawer-overlay" onClick={() => setDrawerOpen(false)} />
+      )}
+      <aside className={"app__sidebar" + (drawerOpen ? " app__sidebar--open" : "")}>
         <h2>Демо-кейсы</h2>
         {error && <div className="error">{error}</div>}
         <ul className="case-list">
@@ -137,7 +148,10 @@ export function App() {
             <li key={c.id}>
               <button
                 className={activeCase?.id === c.id ? "active" : ""}
-                onClick={() => onSelectCase(c.id)}
+                onClick={() => {
+                  onSelectCase(c.id);
+                  setDrawerOpen(false);
+                }}
               >
                 {c.name}
                 <small>
@@ -183,7 +197,12 @@ export function App() {
             />
           </>
         ) : (
-          <div className="placeholder">Выберите кейс слева</div>
+          <div className="placeholder">
+            <p>Выберите кейс из меню</p>
+            <button className="placeholder__cta" onClick={() => setDrawerOpen(true)}>
+              Открыть демо-кейсы
+            </button>
+          </div>
         )}
       </main>
 

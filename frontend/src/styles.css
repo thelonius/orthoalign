@@ -41,6 +41,7 @@ body, html, #root {
   .app--with-critic .app__sidebar { display: none; }
 }
 
+
 .app__header {
   grid-area: header;
   display: flex;
@@ -64,6 +65,30 @@ body, html, #root {
   background: #2a2a32;
   border-radius: 4px;
   color: #9aa0a6;
+}
+
+.app__burger {
+  display: none;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid #2a2a32;
+  color: #e8e8ea;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+.app__burger:hover { background: #1c1c24; }
+
+.app__drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 60;
 }
 
 .app__hint {
@@ -396,11 +421,24 @@ body, html, #root {
 .placeholder {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 16px;
   color: #6a6a72;
   font-size: 14px;
 }
+.placeholder p { margin: 0; }
+.placeholder__cta {
+  background: #2c4a78;
+  border: 1px solid #4a6a98;
+  color: #e8e8ea;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.placeholder__cta:hover { background: #3a5e90; }
 
 .metrics {
   display: flex;
@@ -547,4 +585,61 @@ body, html, #root {
   border-radius: 6px;
   font-size: 13px;
   margin-bottom: 12px;
+}
+
+/* === Мобильный layout (в конце файла, чтобы перебивать базовые правила) === */
+@media (max-width: 700px) {
+  .app, .app--with-critic {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px 1fr;
+    grid-template-areas:
+      "header"
+      "main";
+  }
+  .app__burger { display: flex; }
+  .app__header { padding: 0 12px; gap: 8px; }
+  .app__header h1 { font-size: 16px; }
+  .app__tag { display: none; }
+  .app__hint { display: none; }
+
+  .app__sidebar {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 70;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .app__sidebar--open { transform: translateX(0); }
+  .app__drawer-overlay { display: block; }
+
+  .critic {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 80;
+    border-left: none;
+  }
+
+  .app__autorange,
+  .app__critic { padding: 6px 10px; font-size: 12px; }
+  .app__reset { padding: 4px 8px; font-size: 11px; }
+  .app__about { width: 28px; height: 28px; font-size: 12px; }
+
+  .empty-plan { top: 8px; width: calc(100% - 24px); }
+  .empty-plan__panel { padding: 12px 16px; }
+  .empty-plan__title { font-size: 13px; }
+  .empty-plan__hint { font-size: 11px; margin-bottom: 10px; }
+
+  .metrics { overflow-x: auto; gap: 16px; padding: 6px 12px; }
+  .metrics__cell { flex-shrink: 0; }
+
+  .stage-slider { padding: 8px 12px; gap: 10px; }
+
+  .about__panel { padding: 18px 20px; max-height: calc(100vh - 40px); overflow-y: auto; }
+  .about__panel h2 { font-size: 16px; }
 }
