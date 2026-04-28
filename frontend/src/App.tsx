@@ -7,6 +7,7 @@ import { usePlan } from "./lib/store";
 import { CriticPanel } from "./components/CriticPanel";
 import { MetricsBar } from "./components/MetricsBar";
 import { CaseThumbnail } from "./components/CaseThumbnail";
+import { RotationSliders } from "./components/RotationSliders";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
@@ -173,25 +174,28 @@ export function App() {
           <>
             <Viewer caseData={activeCase} />
             {selectedLabel != null && (
-              <div className="gizmo-toolbar">
-                <div className="gizmo-toolbar__label">Зуб {selectedLabel}</div>
-                <div className="gizmo-toolbar__modes">
-                  <button
-                    className={gizmoMode === "translate" ? "active" : ""}
-                    onClick={() => setGizmoMode("translate")}
-                    title="Перемещение"
-                  >
-                    ⇄
-                  </button>
-                  <button
-                    className={gizmoMode === "rotate" ? "active" : ""}
-                    onClick={() => setGizmoMode("rotate")}
-                    title="Поворот"
-                  >
-                    ↻
-                  </button>
+              <>
+                <div className="gizmo-toolbar">
+                  <div className="gizmo-toolbar__label">Зуб {selectedLabel}</div>
+                  <div className="gizmo-toolbar__modes">
+                    <button
+                      className={gizmoMode === "translate" ? "active" : ""}
+                      onClick={() => setGizmoMode("translate")}
+                      title="Перемещение"
+                    >
+                      ⇄
+                    </button>
+                    <button
+                      className={gizmoMode === "rotate" ? "active" : ""}
+                      onClick={() => setGizmoMode("rotate")}
+                      title="Поворот"
+                    >
+                      ↻
+                    </button>
+                  </div>
                 </div>
-              </div>
+                {gizmoMode === "rotate" && <RotationSliders />}
+              </>
             )}
             {targetCount === 0 && !showCritic && (
               <div className="empty-plan">

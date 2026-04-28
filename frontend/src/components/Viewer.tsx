@@ -55,7 +55,7 @@ export function Viewer({ caseData }: Props) {
         <TransformControls
           object={selectedObj}
           mode={gizmoMode}
-          size={gizmoMode === "rotate" ? 1.2 : 0.7}
+          size={gizmoMode === "rotate" ? 1.6 : 1.0}
           space="local"
           onObjectChange={onGizmoChange}
         />
