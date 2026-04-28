@@ -436,6 +436,49 @@ body, html, #root {
   flex: 1;
 }
 
+.gizmo-toolbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  background: rgba(20, 20, 26, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #2a2a32;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.gizmo-toolbar__label {
+  color: #c8c8ca;
+  font-weight: 500;
+}
+.gizmo-toolbar__modes {
+  display: flex;
+  gap: 4px;
+}
+.gizmo-toolbar__modes button {
+  width: 28px;
+  height: 28px;
+  background: #1c1c24;
+  border: 1px solid #2a2a32;
+  color: #9aa0a6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gizmo-toolbar__modes button:hover { background: #2a2a32; color: #e8e8ea; }
+.gizmo-toolbar__modes button.active {
+  background: #2c4a78;
+  border-color: #4a6a98;
+  color: #e8e8ea;
+}
+
 .placeholder {
   flex: 1;
   display: flex;

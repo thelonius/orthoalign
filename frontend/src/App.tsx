@@ -29,6 +29,8 @@ export function App() {
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const targets = usePlan((s) => s.targets);
   const resetTargets = usePlan((s) => s.resetTargets);
+  const gizmoMode = usePlan((s) => s.gizmoMode);
+  const setGizmoMode = usePlan((s) => s.setGizmoMode);
 
   useEffect(() => {
     fetchCases()
@@ -170,6 +172,27 @@ export function App() {
         {activeCase ? (
           <>
             <Viewer caseData={activeCase} />
+            {selectedLabel != null && (
+              <div className="gizmo-toolbar">
+                <div className="gizmo-toolbar__label">Зуб {selectedLabel}</div>
+                <div className="gizmo-toolbar__modes">
+                  <button
+                    className={gizmoMode === "translate" ? "active" : ""}
+                    onClick={() => setGizmoMode("translate")}
+                    title="Перемещение"
+                  >
+                    ⇄
+                  </button>
+                  <button
+                    className={gizmoMode === "rotate" ? "active" : ""}
+                    onClick={() => setGizmoMode("rotate")}
+                    title="Поворот"
+                  >
+                    ↻
+                  </button>
+                </div>
+              </div>
+            )}
             {targetCount === 0 && !showCritic && (
               <div className="empty-plan">
                 <div className="empty-plan__panel">

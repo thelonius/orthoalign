@@ -9,22 +9,13 @@ interface Props {
 }
 
 export function Viewer({ caseData }: Props) {
-  const stage = usePlan((s) => s.stage);
-  const maxStage = usePlan((s) => s.maxStage);
   const selectedObj = usePlan((s) => s.selectedObj);
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const setTargetTransform = usePlan((s) => s.setTargetTransform);
-
-  const editing = stage === maxStage;
+  const gizmoMode = usePlan((s) => s.gizmoMode);
 
   const onGizmoChange = () => {
     if (selectedLabel == null || !selectedObj) return;
-    // Group's local position already encodes (tooth-center + offset).
-    // We compute offset = group.position - tooth-center via reading from
-    // the pre-transform pose. Since at editing time stage==max, target
-    // equals the displayed transform; so we read group's current
-    // position/quaternion as-is, minus the stored tooth pivot encoded in
-    // userData.
     const pivot = (selectedObj.userData?.pivot as
       | [number, number, number]
       | undefined) ?? [0, 0, 0];
@@ -60,11 +51,11 @@ export function Viewer({ caseData }: Props) {
       <Bounds key={caseData.id} fit clip margin={1.4}>
         <CaseMesh caseData={caseData} />
       </Bounds>
-      {selectedObj && editing && (
+      {selectedObj && (
         <TransformControls
           object={selectedObj}
-          mode="translate"
-          size={0.6}
+          mode={gizmoMode}
+          size={0.7}
           onObjectChange={onGizmoChange}
         />
       )}

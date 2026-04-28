@@ -12,6 +12,8 @@ const IDENTITY: ToothTransform = {
 
 import type { Group } from "three";
 
+type GizmoMode = "translate" | "rotate";
+
 interface PlanState {
   caseId: string | null;
   stage: number;
@@ -19,6 +21,7 @@ interface PlanState {
   selectedLabel: number | null;
   selectedObj: Group | null;
   targets: Record<number, ToothTransform>;
+  gizmoMode: GizmoMode;
 
   setCase: (caseId: string) => void;
   setStage: (stage: number) => void;
@@ -27,6 +30,7 @@ interface PlanState {
   setTargetTransform: (label: number, transform: ToothTransform) => void;
   setAllTargets: (targets: Record<number, ToothTransform>) => void;
   resetTargets: () => void;
+  setGizmoMode: (mode: GizmoMode) => void;
 }
 
 export const usePlan = create<PlanState>()((set, get) => {
@@ -40,17 +44,27 @@ export const usePlan = create<PlanState>()((set, get) => {
   selectedLabel: null,
   selectedObj: null,
   targets: {},
+  gizmoMode: "translate",
 
   setCase: (caseId) =>
     set({ caseId, stage: 0, selectedLabel: null, selectedObj: null, targets: {} }),
   setStage: (stage) => set({ stage }),
   selectTooth: (selectedLabel) =>
-    set({ selectedLabel, selectedObj: null }),
+    // При выделении автоматом ставим стадию на максимум — так пользователь
+    // редактирует «целевую» позицию, а не пытается двигать зуб в исходном
+    // состоянии (что бессмысленно, т.к. отображение всё равно показывает
+    // identity при stage=0).
+    set((s) => ({
+      selectedLabel,
+      selectedObj: null,
+      stage: selectedLabel != null ? s.maxStage : s.stage,
+    })),
   setSelectedObj: (obj) => set({ selectedObj: obj }),
   setTargetTransform: (label, transform) =>
     set((s) => ({ targets: { ...s.targets, [label]: transform } })),
   setAllTargets: (targets) => set({ targets }),
   resetTargets: () => set({ targets: {}, selectedLabel: null, selectedObj: null }),
+  setGizmoMode: (mode) => set({ gizmoMode: mode }),
 };
 });
 

@@ -90,8 +90,9 @@ function Tooth({ data, isSelected, isColliding }: ToothProps) {
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    // Клик по десне снимает текущее выделение, иначе единственный способ
-    // снять — кликнуть полностью мимо меша.
+    // Клик по десне снимает текущее выделение.
+    // Клик по зубу выделяет + автоматом ставит stage=max через store
+    // (selectTooth action), чтобы гизмо показывал редактируемое состояние.
     if (label === 0) selectTooth(null);
     else selectTooth(label);
   };
