@@ -11,8 +11,16 @@ export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
   const [activeCase, setActiveCase] = useState<CaseData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showAbout, setShowAbout] = useState(true);
+  // About показываем только если пользователь его раньше не закрывал.
+  const [showAbout, setShowAbout] = useState(
+    () => !localStorage.getItem("orthoalign.aboutDismissed"),
+  );
   const [showCritic, setShowCritic] = useState(false);
+
+  const dismissAbout = () => {
+    setShowAbout(false);
+    localStorage.setItem("orthoalign.aboutDismissed", "1");
+  };
   // Bump'ится при «применить план» — сигнал StageSlider'у автозапустить play.
   const [autoplayTrigger, setAutoplayTrigger] = useState(0);
 
@@ -45,11 +53,11 @@ export function App() {
   const targetCount = Object.keys(targets).length;
 
   return (
-    <div className="app">
+    <div className={"app" + (showCritic && activeCase ? " app--with-critic" : "")}>
       {showAbout && (
-        <div className="about" onClick={() => setShowAbout(false)}>
+        <div className="about" onClick={() => dismissAbout()}>
           <div className="about__panel" onClick={(e) => e.stopPropagation()}>
-            <button className="about__close" onClick={() => setShowAbout(false)}>×</button>
+            <button className="about__close" onClick={() => dismissAbout()}>×</button>
             <h2>OrthoAlign — демо ортодонтического планировщика</h2>
             <p>
               Технико-демонстрационный прототип. Сделан как заявка на роль AI Fullstack
@@ -82,7 +90,7 @@ export function App() {
               Сегментация на демо-кейсах предкэширована; в v2 планируется живой инференс через
               Celery-таску на pretrained MeshSegNet.
             </p>
-            <button className="about__start" onClick={() => setShowAbout(false)}>
+            <button className="about__start" onClick={() => dismissAbout()}>
               Начать →
             </button>
           </div>
@@ -146,7 +154,7 @@ export function App() {
         {activeCase ? (
           <>
             <Viewer caseData={activeCase} />
-            {targetCount === 0 && (
+            {targetCount === 0 && !showCritic && (
               <div className="empty-plan">
                 <div className="empty-plan__panel">
                   <div className="empty-plan__title">
