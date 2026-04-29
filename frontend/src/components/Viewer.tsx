@@ -7,9 +7,14 @@ import { usePlan, ToothTransform } from "../lib/store";
 
 interface Props {
   caseData: CaseData;
+  pairedCase?: CaseData | null;
+  // Зазор между челюстями по Z. Для парных кейсов разносим upper над lower,
+  // чтобы окклюзия читалась визуально (без точного alignment, который
+  // требует отдельного pipeline).
+  occlusionGap?: number;
 }
 
-export function Viewer({ caseData }: Props) {
+export function Viewer({ caseData, pairedCase, occlusionGap = 18 }: Props) {
   const selectedObj = usePlan((s) => s.selectedObj);
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const setTargetTransform = usePlan((s) => s.setTargetTransform);
@@ -20,11 +25,20 @@ export function Viewer({ caseData }: Props) {
     const pivot = (selectedObj.userData?.pivot as
       | [number, number, number]
       | undefined) ?? [0, 0, 0];
+    // ВАЖНО: position зуба = position group в мировых координатах. Если зуб
+    // принадлежит парной челюсти, у его группы есть родительский offset по Z
+    // (через <group position={[0,0,occlusionGap]}>). Берём world-position
+    // вместо локального, чтобы дельта считалась корректно.
+    const worldPos = selectedObj.getWorldPosition(
+      new (selectedObj.position.constructor as any)(),
+    );
     const target: ToothTransform = {
       position: [
-        selectedObj.position.x - pivot[0],
-        selectedObj.position.y - pivot[1],
-        selectedObj.position.z - pivot[2],
+        worldPos.x - pivot[0],
+        worldPos.y - pivot[1],
+        // Для верхней челюсти Z-offset из родителя должен исключаться из дельты —
+        // храним «чистое» смещение от исходной позиции коронки.
+        worldPos.z - pivot[2] - (selectedObj.userData?.zOffset ?? 0),
       ],
       quaternion: [
         selectedObj.quaternion.x,
@@ -35,6 +49,12 @@ export function Viewer({ caseData }: Props) {
     };
     setTargetTransform(selectedLabel, target);
   };
+
+  // Какая челюсть верхняя для этой пары.
+  const isPaired = !!pairedCase;
+  const primaryUpper = caseData.jaw === "upper";
+  const primaryZ = isPaired ? (primaryUpper ? occlusionGap : 0) : 0;
+  const pairedZ = isPaired ? (primaryUpper ? 0 : occlusionGap) : 0;
 
   return (
     <Canvas
@@ -48,10 +68,18 @@ export function Viewer({ caseData }: Props) {
       <OrbitControls makeDefault enableDamping target={[0, 0, 0]} />
       {/* Bounds.observe=false: фитим камеру один раз на загрузке кейса и
           не пересчитываем при движении зубов, иначе камера дёргается на
-          каждом стейдже. */}
-      <Bounds key={caseData.id} fit clip margin={1.4}>
-        <CaseMesh caseData={caseData} />
-        <ArchLine caseData={caseData} />
+          каждом стейдже. Ключ зависит от пары — пересчитывается при смене. */}
+      <Bounds key={caseData.id + (pairedCase?.id ?? "")} fit clip margin={1.4}>
+        <group position={[0, 0, primaryZ]}>
+          <CaseMesh caseData={caseData} zOffset={primaryZ} />
+          <ArchLine caseData={caseData} />
+        </group>
+        {pairedCase && (
+          <group position={[0, 0, pairedZ]}>
+            <CaseMesh caseData={pairedCase} zOffset={pairedZ} />
+            <ArchLine caseData={pairedCase} />
+          </group>
+        )}
       </Bounds>
       {selectedObj && (
         <TransformControls

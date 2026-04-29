@@ -7,6 +7,12 @@ export interface CaseMeta {
   toothCount: number;
   source: string;
   toothCenters: Record<string, [number, number, number]>;
+  // Если у кейса есть парная челюсть — id второго кейса. Frontend подгружает оба
+  // и рендерит вместе. Без этого поля кейс рендерится одной челюстью.
+  pairedCaseId?: string;
+  // isPrimary=false — кейс не показывается в списке выбора, только подгружается
+  // как paired. true (или undefined) — обычный кейс в списке.
+  isPrimary?: boolean;
 }
 
 export interface Transform {

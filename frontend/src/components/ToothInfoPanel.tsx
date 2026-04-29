@@ -11,6 +11,7 @@ import { JawSchema } from "./JawSchema";
 
 interface Props {
   caseData: CaseData;
+  pairedCase?: CaseData | null;
 }
 
 function fmtMm(v: number, digits = 2): string {
@@ -30,18 +31,29 @@ function fmtMm(v: number, digits = 2): string {
  * — отклонение от арки до и после плана (в мм)
  * — AI-обоснование, если на этот зуб был LLM-план
  */
-export function ToothInfoPanel({ caseData }: Props) {
+export function ToothInfoPanel({ caseData, pairedCase }: Props) {
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const targets = usePlan((s) => s.targets);
   const lastSuggestion = usePlan((s) => s.lastSuggestion);
   const maxStage = usePlan((s) => s.maxStage);
   const selectTooth = usePlan((s) => s.selectTooth);
 
-  const archInfo = useMemo(() => {
+  // Какая из двух челюстей содержит выбранный зуб. По FDI первый знак
+  // достаточен: 1*/2* — upper, 3*/4* — lower.
+  const owningCase = useMemo(() => {
     if (selectedLabel == null) return null;
-    const initialPositions = currentPositions(caseData, {}, 0, maxStage);
+    const expectsUpper = selectedLabel < 30;
+    if (caseData.jaw === (expectsUpper ? "upper" : "lower")) return caseData;
+    if (pairedCase && pairedCase.jaw === (expectsUpper ? "upper" : "lower"))
+      return pairedCase;
+    return caseData;
+  }, [caseData, pairedCase, selectedLabel]);
+
+  const archInfo = useMemo(() => {
+    if (selectedLabel == null || !owningCase) return null;
+    const initialPositions = currentPositions(owningCase, {}, 0, maxStage);
     const targetPositions = currentPositions(
-      caseData,
+      owningCase,
       targets,
       maxStage,
       maxStage,
@@ -58,7 +70,7 @@ export function ToothInfoPanel({ caseData }: Props) {
       offsetInitial: offsetFromArch(initial.x, initial.y, archInitial),
       offsetTarget: offsetFromArch(target.x, target.y, archTarget),
     };
-  }, [caseData, targets, selectedLabel, maxStage]);
+  }, [owningCase, targets, selectedLabel, maxStage]);
 
   if (selectedLabel == null) return null;
 
@@ -89,7 +101,7 @@ export function ToothInfoPanel({ caseData }: Props) {
       </header>
 
       <JawSchema
-        jaw={caseData.jaw}
+        jaw={owningCase?.jaw ?? caseData.jaw}
         selected={selectedLabel}
         onSelect={selectTooth}
       />

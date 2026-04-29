@@ -12,7 +12,10 @@ import { ToothInfoPanel } from "./components/ToothInfoPanel";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
+  // Активные челюсти: либо одна (single), либо две (paired).
+  // Первая всегда primary — она же выбрана в sidebar.
   const [activeCase, setActiveCase] = useState<CaseData | null>(null);
+  const [pairedCase, setPairedCase] = useState<CaseData | null>(null);
   const [error, setError] = useState<string | null>(null);
   // About свернут по умолчанию — открывается по клику на ? в шапке.
   const [showAbout, setShowAbout] = useState(false);
@@ -39,6 +42,7 @@ export function App() {
   const appliedPlanTitle = usePlan((s) => s.appliedPlanTitle);
 
   // Демо-план кейса (для GH Pages — без бэкенда, чтобы Play мог что-то двигать).
+  // Для парных кейсов targets обоих челюстей мерджатся в один объект.
   const [demoPlan, setDemoPlan] = useState<DemoPlan | null>(null);
 
   const onLoadDemoPlan = () => {
@@ -51,9 +55,10 @@ export function App() {
   useEffect(() => {
     fetchCases()
       .then((cs) => {
-        setCases(cs);
-        // Автовыбор первого кейса для немедленного wow-эффекта.
-        if (cs.length > 0) onSelectCase(cs[0].id);
+        // Из списка скрываем не-primary кейсы — они подгружаются как paired.
+        const visible = cs.filter((c) => c.isPrimary !== false);
+        setCases(visible);
+        if (visible.length > 0) onSelectCase(visible[0].id);
       })
       .catch((e) => setError(String(e)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,15 +68,34 @@ export function App() {
     setError(null);
     setCaseInStore(id);
     setDemoPlan(null);
+    setPairedCase(null);
     try {
       const data = await fetchCase(id);
       setActiveCase(data);
-      // Тянем демо-план параллельно — отсутствие 404 не считается ошибкой.
-      try {
-        const plan = await fetchDemoPlan(id);
+
+      // Если у кейса есть парная челюсть — параллельно загружаем её и
+      // мерджим планы. Без этого окклюзия не нарисуется.
+      const pairedId = data.pairedCaseId;
+      const [pairedData, plan, pairedPlan] = await Promise.all([
+        pairedId ? fetchCase(pairedId).catch(() => null) : Promise.resolve(null),
+        fetchDemoPlan(id).catch(() => null),
+        pairedId
+          ? fetchDemoPlan(pairedId).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+
+      setPairedCase(pairedData);
+
+      // Мердж демо-планов: FDI labels не пересекаются между челюстями,
+      // так что простая комбинация targets безопасна.
+      if (plan && pairedPlan) {
+        setDemoPlan({
+          ...plan,
+          title: plan.title.replace(/^Демо-план: /, "Обе челюсти: "),
+          targets: { ...plan.targets, ...pairedPlan.targets },
+        });
+      } else {
         setDemoPlan(plan);
-      } catch {
-        setDemoPlan(null);
       }
     } catch (e) {
       setError(String(e));
@@ -214,7 +238,7 @@ export function App() {
       <main className="app__main">
         {activeCase ? (
           <>
-            <Viewer caseData={activeCase} />
+            <Viewer caseData={activeCase} pairedCase={pairedCase} />
             {selectedLabel != null && (
               <>
                 <div className="gizmo-toolbar">
@@ -237,7 +261,7 @@ export function App() {
                   </div>
                 </div>
                 {gizmoMode === "rotate" && <RotationSliders />}
-                <ToothInfoPanel caseData={activeCase} />
+                <ToothInfoPanel caseData={activeCase} pairedCase={pairedCase} />
               </>
             )}
             {targetCount === 0 && !showCritic && (

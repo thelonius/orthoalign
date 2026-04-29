@@ -116,6 +116,21 @@ def process_case(*, mesh_path: Path, labels_path: Path, case_id: str,
         center = vertices[mask].mean(axis=0)
         tooth_centers[str(int(label))] = center.tolist()
 
+    # Teeth3DS даёт сканы upper/lower в разных локальных системах координат.
+    # Чтобы UI был консистентным («right tooth = +X»), детектируем перевёрнутые
+    # сканы по правому моляру (FDI 17 для upper, 47 для lower) и зеркалим
+    # геометрию по X. Без этого парные кейсы не лягут друг на друга.
+    right_molar = "17" if jaw == "upper" else "47"
+    if right_molar in tooth_centers and tooth_centers[right_molar][0] < 0:
+        vertices = vertices.copy()
+        vertices[:, 0] *= -1.0
+        # Зеркалим — меняется winding треугольников. Перевернуть индексы граней,
+        # иначе нормали смотрят внутрь и шейдинг получается чёрным.
+        faces = faces[:, [0, 2, 1]]
+        for k in tooth_centers:
+            tooth_centers[k][0] *= -1.0
+        print(f"[mirror] {case_id}: зеркало по X (right molar был в -X)")
+
     case_dir = output_dir / case_id
     case_dir.mkdir(parents=True, exist_ok=True)
 

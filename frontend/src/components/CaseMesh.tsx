@@ -7,6 +7,10 @@ import { findCollisions } from "../lib/collisions";
 
 interface Props {
   caseData: CaseData;
+  // Z-смещение, которое унаследовано от родительской группы (для парных
+  // кейсов upper поднята над lower). Сохраняем в userData, чтобы Viewer
+  // мог скорректировать дельту при работе TransformControls.
+  zOffset?: number;
 }
 
 function colorForLabel(label: number, selected: boolean, colliding: boolean): THREE.Color {
@@ -76,9 +80,10 @@ interface ToothProps {
   data: ToothMeshData;
   isSelected: boolean;
   isColliding: boolean;
+  zOffset?: number;
 }
 
-function Tooth({ data, isSelected, isColliding }: ToothProps) {
+function Tooth({ data, isSelected, isColliding, zOffset = 0 }: ToothProps) {
   const { label, geometry, center } = data;
   const stage = usePlan((s) => s.stage);
   const maxStage = usePlan((s) => s.maxStage);
@@ -110,6 +115,9 @@ function Tooth({ data, isSelected, isColliding }: ToothProps) {
     if (g) {
       g.userData.pivot = [center.x, center.y, center.z];
       g.userData.label = label;
+      // Z-offset унаследованный от родительской группы (для парных кейсов).
+      // Используется в Viewer.onGizmoChange чтобы исключить его из дельты.
+      g.userData.zOffset = zOffset;
     }
   };
 
@@ -138,7 +146,7 @@ function Tooth({ data, isSelected, isColliding }: ToothProps) {
   );
 }
 
-export function CaseMesh({ caseData }: Props) {
+export function CaseMesh({ caseData, zOffset = 0 }: Props) {
   const teeth = useMemo(() => buildToothMeshes(caseData), [caseData]);
   const selectedLabel = usePlan((s) => s.selectedLabel);
   const selectTooth = usePlan((s) => s.selectTooth);
@@ -159,6 +167,7 @@ export function CaseMesh({ caseData }: Props) {
           data={data}
           isSelected={data.label === selectedLabel}
           isColliding={colliding.has(data.label)}
+          zOffset={zOffset}
         />
       ))}
     </group>
