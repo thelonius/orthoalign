@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Viewer } from "./components/Viewer";
 import { StageSlider } from "./components/StageSlider";
-import { fetchCases, fetchCase } from "./lib/api";
-import type { CaseData, CaseMeta } from "./lib/types";
+import { fetchCases, fetchCase, fetchDemoPlan } from "./lib/api";
+import type { CaseData, CaseMeta, DemoPlan } from "./lib/types";
 import { usePlan } from "./lib/store";
 import { CriticPanel } from "./components/CriticPanel";
 import { MetricsBar } from "./components/MetricsBar";
 import { CaseThumbnail } from "./components/CaseThumbnail";
 import { RotationSliders } from "./components/RotationSliders";
+import { ToothInfoPanel } from "./components/ToothInfoPanel";
 
 export function App() {
   const [cases, setCases] = useState<CaseMeta[]>([]);
@@ -32,6 +33,20 @@ export function App() {
   const resetTargets = usePlan((s) => s.resetTargets);
   const gizmoMode = usePlan((s) => s.gizmoMode);
   const setGizmoMode = usePlan((s) => s.setGizmoMode);
+  const showArch = usePlan((s) => s.showArch);
+  const toggleArch = usePlan((s) => s.toggleArch);
+  const loadDemoPlan = usePlan((s) => s.loadDemoPlan);
+  const appliedPlanTitle = usePlan((s) => s.appliedPlanTitle);
+
+  // Демо-план кейса (для GH Pages — без бэкенда, чтобы Play мог что-то двигать).
+  const [demoPlan, setDemoPlan] = useState<DemoPlan | null>(null);
+
+  const onLoadDemoPlan = () => {
+    if (!demoPlan) return;
+    loadDemoPlan(demoPlan);
+    setShowCritic(false);
+    setAutoplayTrigger((n) => n + 1);
+  };
 
   useEffect(() => {
     fetchCases()
@@ -47,9 +62,17 @@ export function App() {
   const onSelectCase = async (id: string) => {
     setError(null);
     setCaseInStore(id);
+    setDemoPlan(null);
     try {
       const data = await fetchCase(id);
       setActiveCase(data);
+      // Тянем демо-план параллельно — отсутствие 404 не считается ошибкой.
+      try {
+        const plan = await fetchDemoPlan(id);
+        setDemoPlan(plan);
+      } catch {
+        setDemoPlan(null);
+      }
     } catch (e) {
       setError(String(e));
     }
@@ -127,6 +150,25 @@ export function App() {
           </span>
         )}
         {activeCase && (
+          <label className="app__toggle" title="Показать идеальную параболу-арку">
+            <input
+              type="checkbox"
+              checked={showArch}
+              onChange={toggleArch}
+            />
+            <span>Дуга</span>
+          </label>
+        )}
+        {activeCase && demoPlan && (
+          <button
+            className="app__demo-plan"
+            onClick={onLoadDemoPlan}
+            title={demoPlan.title}
+          >
+            🎬 Пример плана
+          </button>
+        )}
+        {activeCase && (
           <button
             className="app__critic"
             onClick={() => setShowCritic((s) => !s)}
@@ -181,20 +223,21 @@ export function App() {
                     <button
                       className={gizmoMode === "translate" ? "active" : ""}
                       onClick={() => setGizmoMode("translate")}
-                      title="Перемещение"
+                      title="Перемещение по осям"
                     >
-                      ⇄
+                      ⇄ Сдвиг
                     </button>
                     <button
                       className={gizmoMode === "rotate" ? "active" : ""}
                       onClick={() => setGizmoMode("rotate")}
-                      title="Поворот"
+                      title="Поворот по трём осям"
                     >
-                      ↻
+                      ↻ Поворот
                     </button>
                   </div>
                 </div>
                 {gizmoMode === "rotate" && <RotationSliders />}
+                <ToothInfoPanel caseData={activeCase} />
               </>
             )}
             {targetCount === 0 && !showCritic && (
@@ -208,12 +251,26 @@ export function App() {
                     После этого слайдер покажет анимацию по стадиям.
                   </div>
                   <div className="empty-plan__actions">
+                    {demoPlan && (
+                      <button
+                        className="empty-plan__primary"
+                        onClick={onLoadDemoPlan}
+                        title={demoPlan.title}
+                      >
+                        🎬 Показать пример плана
+                      </button>
+                    )}
                     <button onClick={() => setShowCritic(true)}>🤖 AI план через Llama</button>
                   </div>
                   <div className="empty-plan__or">
                     или клик по любому зубу — расставляйте вручную
                   </div>
                 </div>
+              </div>
+            )}
+            {appliedPlanTitle && targetCount > 0 && (
+              <div className="applied-plan-tag" title={appliedPlanTitle}>
+                Применён: {appliedPlanTitle}
               </div>
             )}
             <MetricsBar caseData={activeCase} />

@@ -35,8 +35,17 @@ async function main() {
       continue;
     }
     await copyFile(dataSrc, dataDst);
+
+    // План — опциональный файл, генерируется ml/generate_demo_plan.py.
+    // Без него фронт просто не покажет кнопку «Пример плана».
+    const planSrc = path.join(SRC, id, "plan.json");
+    if (existsSync(planSrc)) {
+      await copyFile(planSrc, path.join(DST, `${id}_plan.json`));
+      console.log(`[ok] ${id} (+plan)`);
+    } else {
+      console.log(`[ok] ${id}`);
+    }
     index.push(meta);
-    console.log(`[ok] ${id}`);
   }
 
   await writeFile(

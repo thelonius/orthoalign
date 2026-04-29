@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Bounds, TransformControls } from "@react-three/drei";
 import { CaseMesh } from "./CaseMesh";
+import { ArchLine } from "./ArchLine";
 import type { CaseData } from "../lib/types";
 import { usePlan, ToothTransform } from "../lib/store";
 
@@ -50,6 +51,7 @@ export function Viewer({ caseData }: Props) {
           каждом стейдже. */}
       <Bounds key={caseData.id} fit clip margin={1.4}>
         <CaseMesh caseData={caseData} />
+        <ArchLine caseData={caseData} />
       </Bounds>
       {selectedObj && (
         <TransformControls

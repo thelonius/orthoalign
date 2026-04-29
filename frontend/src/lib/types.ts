@@ -33,3 +33,20 @@ export interface SuggestResponse {
   model: string;
   raw_llm_text?: string | null;
 }
+
+// Демо-план, собранный детерминистски в ml/generate_demo_plan.py.
+// Используется на GH Pages, где /api/suggest недоступен.
+export interface DemoPlan {
+  id: string;
+  kind: "demo";
+  title: string;
+  arch: { a: number; b: number; c: number };
+  midline_x: number;
+  targets: Record<
+    string,
+    {
+      position: [number, number, number];
+      quaternion: [number, number, number, number];
+    }
+  >;
+}

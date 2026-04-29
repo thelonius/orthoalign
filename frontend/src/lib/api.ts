@@ -1,4 +1,4 @@
-import type { CaseData, CaseMeta, SuggestResponse } from "./types";
+import type { CaseData, CaseMeta, DemoPlan, SuggestResponse } from "./types";
 import type { ToothTransform } from "./store";
 
 // VITE_API_MODE: 'static' (default) reads case JSON from /cases/ as static
@@ -20,6 +20,16 @@ export async function fetchCases(): Promise<CaseMeta[]> {
 export async function fetchCase(id: string): Promise<CaseData> {
   const url = MODE === "backend" ? `/api/cases/${id}` : `${BASE}/cases/${id}.json`;
   const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// Демо-план — статический JSON, кладётся sync-cases'ом из backend/data/cases/<id>/plan.json.
+// Работает на GH Pages где /api/suggest недоступен.
+export async function fetchDemoPlan(id: string): Promise<DemoPlan | null> {
+  const url = `${BASE}/cases/${id}_plan.json`;
+  const r = await fetch(url);
+  if (r.status === 404) return null;
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }

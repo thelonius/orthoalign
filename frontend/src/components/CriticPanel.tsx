@@ -13,6 +13,7 @@ export function CriticPanel({ caseId, onClose, onPlanApplied }: Props) {
   const targets = usePlan((s) => s.targets);
   const setAllTargets = usePlan((s) => s.setAllTargets);
   const setStage = usePlan((s) => s.setStage);
+  const setLastSuggestion = usePlan((s) => s.setLastSuggestion);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,9 @@ export function CriticPanel({ caseId, onClose, onPlanApplied }: Props) {
       };
     }
     setAllTargets(merged);
+    // Сохраняем разбор в store, чтобы карточка зуба могла показать
+    // per-tooth rationale даже после закрытия CriticPanel.
+    setLastSuggestion(result);
     setStage(0);
     onPlanApplied?.();
   };
