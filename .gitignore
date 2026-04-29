@@ -26,8 +26,7 @@ dist/
 .env
 .env.local
 
-# Data — большие файлы кейсов, держим только meta.json в git
-backend/data/cases/*/data.json
+# Data — raw scans слишком большие, держим в репо только meta.json + data.json
 backend/data/cases/*/raw/
 
 # ML weights
@@ -42,7 +41,11 @@ docker-compose.override.yml
 
 # Внешние клонированные репозитории — храним только наш код
 3DTeethSeg22_challenge/
+3DTeethSeg_MICCAI_Challenges/
 3D-Teeth-Scan-Semantic-Segmentation-with-MeshSegNet/
+
+# Локальные датасеты (большие)
+datasets/
 
 # Local venv
 .venv/

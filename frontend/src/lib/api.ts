@@ -6,16 +6,19 @@ import type { ToothTransform } from "./store";
 // 'backend' calls the FastAPI server via vite proxy; useful for dev when
 // you want the full Python+Celery stack alive.
 const MODE = (import.meta.env.VITE_API_MODE as string) ?? "static";
+// BASE учитывает vite-конфиг (base: '/' в dev, '/orthoalign/' в GH Pages).
+// Без него fetch('/cases/...') ушёл бы в корень домена, минуя путь приложения.
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export async function fetchCases(): Promise<CaseMeta[]> {
-  const url = MODE === "backend" ? "/api/cases" : "/cases/index.json";
+  const url = MODE === "backend" ? "/api/cases" : `${BASE}/cases/index.json`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
 
 export async function fetchCase(id: string): Promise<CaseData> {
-  const url = MODE === "backend" ? `/api/cases/${id}` : `/cases/${id}.json`;
+  const url = MODE === "backend" ? `/api/cases/${id}` : `${BASE}/cases/${id}.json`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
