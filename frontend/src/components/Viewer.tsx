@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls, TransformControls } from "@react-three/drei";
+import { OrbitControls, TransformControls } from "@react-three/drei";
 import { CaseMesh } from "./CaseMesh";
 import { ArchLine } from "./ArchLine";
 import type { CaseData } from "../lib/types";
@@ -102,32 +102,30 @@ export function Viewer({ caseData, pairedCase, occlusionGap = 0.5 }: Props) {
   const primaryZ = offsets.primary;
   const pairedZ = offsets.paired;
 
+  // Pre-fit-камера: после PCA-выравнивания центры зубов лежат около (0, 5, 5)
+  // в реальных мм, размер модели ~50мм по самой большой оси. Дистанция 100мм
+  // с fov=45° даёт visible-height ~83мм — модель помещается с margin'ом.
+  // Bounds и makeDefault на drei падали с TypeError на старте — отказались.
   return (
     <Canvas
-      camera={{ position: [0, -150, 100], fov: 45, near: 0.1, far: 2000 }}
+      camera={{ position: [0, -100, 60], fov: 45, near: 0.5, far: 1000 }}
       style={{ background: "#1a1a1f" }}
     >
       <ambientLight intensity={0.6} />
       <directionalLight position={[80, 80, 80]} intensity={0.7} />
       <directionalLight position={[-80, -80, 80]} intensity={0.4} />
       <directionalLight position={[0, 0, -80]} intensity={0.25} />
-      <OrbitControls makeDefault enableDamping />
-      {/* drei.Bounds: fit-камера к содержимому, БЕЗ clip — clip ломает
-          r3f mount на пустой первой отрисовке (ошибка в CameraFit показала,
-          что проблема в timing'е инициализации controls). Ключ зависит от
-          пары — пересчитывается при смене кейса. */}
-      <Bounds key={caseData.id + (pairedCase?.id ?? "")} fit margin={1.4}>
-        <group position={[0, 0, primaryZ]}>
-          <CaseMesh caseData={caseData} zOffset={primaryZ} />
-          <ArchLine caseData={caseData} />
+      <OrbitControls enableDamping target={[0, 5, 5]} />
+      <group position={[0, 0, primaryZ]}>
+        <CaseMesh caseData={caseData} zOffset={primaryZ} />
+        <ArchLine caseData={caseData} />
+      </group>
+      {pairedCase && (
+        <group position={[0, 0, pairedZ]}>
+          <CaseMesh caseData={pairedCase} zOffset={pairedZ} />
+          <ArchLine caseData={pairedCase} />
         </group>
-        {pairedCase && (
-          <group position={[0, 0, pairedZ]}>
-            <CaseMesh caseData={pairedCase} zOffset={pairedZ} />
-            <ArchLine caseData={pairedCase} />
-          </group>
-        )}
-      </Bounds>
+      )}
       {selectedObj && (
         <TransformControls
           object={selectedObj}
