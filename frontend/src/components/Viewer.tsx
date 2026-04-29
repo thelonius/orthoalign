@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Bounds, TransformControls } from "@react-three/drei";
+import { Bounds, OrbitControls, TransformControls } from "@react-three/drei";
 import { CaseMesh } from "./CaseMesh";
 import { ArchLine } from "./ArchLine";
 import type { CaseData } from "../lib/types";
@@ -111,11 +111,12 @@ export function Viewer({ caseData, pairedCase, occlusionGap = 0.5 }: Props) {
       <directionalLight position={[80, 80, 80]} intensity={0.7} />
       <directionalLight position={[-80, -80, 80]} intensity={0.4} />
       <directionalLight position={[0, 0, -80]} intensity={0.25} />
-      <OrbitControls makeDefault enableDamping target={[0, 0, 0]} />
-      {/* Bounds.observe=false: фитим камеру один раз на загрузке кейса и
-          не пересчитываем при движении зубов, иначе камера дёргается на
-          каждом стейдже. Ключ зависит от пары — пересчитывается при смене. */}
-      <Bounds key={caseData.id + (pairedCase?.id ?? "")} fit clip margin={1.4}>
+      <OrbitControls makeDefault enableDamping />
+      {/* drei.Bounds: fit-камера к содержимому, БЕЗ clip — clip ломает
+          r3f mount на пустой первой отрисовке (ошибка в CameraFit показала,
+          что проблема в timing'е инициализации controls). Ключ зависит от
+          пары — пересчитывается при смене кейса. */}
+      <Bounds key={caseData.id + (pairedCase?.id ?? "")} fit margin={1.4}>
         <group position={[0, 0, primaryZ]}>
           <CaseMesh caseData={caseData} zOffset={primaryZ} />
           <ArchLine caseData={caseData} />
