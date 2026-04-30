@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, TransformControls } from "@react-three/drei";
 import { CaseMesh } from "./CaseMesh";
@@ -102,7 +102,16 @@ export function Viewer({ caseData, pairedCase, occlusionGap = 0.5 }: Props) {
   const primaryZ = offsets.primary;
   const pairedZ = offsets.paired;
 
-  // Pre-fit-камера: после PCA-выравнивания центры зубов лежат около (0, 5, 5)
+  // r3f при initial mount иногда оставляет <canvas> в default 300×150 —
+  // ResizeObserver не успевает считать размеры parent'а до первого рендера,
+  // и сцена остаётся крошечной в углу. Пинаем resize-event через тик после
+  // монтажа, чтобы r3f пересчитал buffer и aspect.
+  useEffect(() => {
+    const t = setTimeout(() => window.dispatchEvent(new Event("resize")), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Pre-fit-камера: после PCA-выравнивания центры зубов лежат около (0, 0, 0)
   // в реальных мм, размер модели ~50мм по самой большой оси. Дистанция 100мм
   // с fov=45° даёт visible-height ~83мм — модель помещается с margin'ом.
   // Bounds и makeDefault на drei падали с TypeError на старте — отказались.
@@ -115,7 +124,7 @@ export function Viewer({ caseData, pairedCase, occlusionGap = 0.5 }: Props) {
       <directionalLight position={[80, 80, 80]} intensity={0.7} />
       <directionalLight position={[-80, -80, 80]} intensity={0.4} />
       <directionalLight position={[0, 0, -80]} intensity={0.25} />
-      <OrbitControls enableDamping target={[0, 5, 5]} />
+      <OrbitControls enableDamping target={[0, 0, 0]} />
       <group position={[0, 0, primaryZ]}>
         <CaseMesh caseData={caseData} zOffset={primaryZ} />
         <ArchLine caseData={caseData} />
